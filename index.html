@@ -419,6 +419,45 @@ function loadResume() {
       if(window._previewTimer) clearTimeout(window._previewTimer);
       window._previewTimer = setTimeout(renderPreview, 350);
     }));
+    
+    // Update resume name field when selecting from dropdown
+function updateResumeList() {
+    const savedResumes = Object.keys(localStorage)
+        .filter(key => key.startsWith('resume_'))
+        .map(key => key.replace('resume_', ''));
+
+    const select = document.getElementById('savedResumes');
+    select.innerHTML = '';
+
+    savedResumes.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+    });
+}
+
+// Load the selected resume
+function loadSelectedResume() {
+    const select = document.getElementById('savedResumes');
+    const name = select.value;
+    if (!name) {
+        alert('Please select a saved resume.');
+        return;
+    }
+
+    const saved = localStorage.getItem(`resume_${name}`);
+    if (saved) {
+        const formData = JSON.parse(saved);
+        Object.keys(formData).forEach(fieldName => {
+            const input = document.querySelector(`[name="${fieldName}"]`);
+            if (input) input.value = formData[fieldName];
+        });
+        document.getElementById("resumeName").value = name; // auto-fill resume name field
+        alert(`Resume "${name}" loaded!`);
+    }
+}
+    
   </script>
 </body>
 </html>
