@@ -132,6 +132,8 @@
               <button type="button" id="generate-pdf" class="btn">Generate PDF</button>
               <button type="button" id="preview-update" class="btn secondary">Update preview</button>
               <button type="button" id="reset-btn" class="btn ghost">Reset</button>
+              <button type="button" onclick="saveResume()">💾 Save Resume</button>
+              <button type="button" onclick="loadResume()">📂 Load Resume</button>
             </div>
           </form>
         </div>
@@ -188,6 +190,31 @@
     const workList = document.getElementById('work-list');
     const eduList = document.getElementById('edu-list');
     const preview = document.getElementById('resume-preview');
+
+// Save form data to local storage
+function saveResume() {
+    const formData = {};
+    document.querySelectorAll('#resume-form input, #resume-form textarea').forEach(input => {
+        formData[input.name] = input.value;
+    });
+    localStorage.setItem('savedResume', JSON.stringify(formData));
+    alert('Resume saved locally!');
+}
+
+// Load form data from local storage
+function loadResume() {
+    const saved = localStorage.getItem('savedResume');
+    if (saved) {
+        const formData = JSON.parse(saved);
+        Object.keys(formData).forEach(name => {
+            const input = document.querySelector(`[name="${name}"]`);
+            if (input) input.value = formData[name];
+        });
+        alert('Resume loaded!');
+    } else {
+        alert('No saved resume found.');
+    }
+}
 
     // Add initial single work/education entry
     function makeWorkEntry(data={}){
