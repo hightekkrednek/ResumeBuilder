@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resume Builder — Generate PDF</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --accent:#0b6cf6;
+      --muted:#6b7280;
+      --paper:#ffffff;
+      --bg:#f3f4f6;
+      --max-width:900px;
+      --shadow: 0 6px 18px rgba(13, 14, 20, 0.06);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#111;}
+    .container{max-width:var(--max-width);margin:28px auto;padding:20px;}
+    h1{margin:0 0 12px;font-weight:700;font-size:20px}
+    .grid{display:grid;gap:18px;grid-template-columns:1fr 420px;}
+    @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+    .card{background:var(--paper);padding:18px;border-radius:10px;box-shadow:var(--shadow);}
+    form .row{display:flex;gap:10px;margin-bottom:8px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type=text], input[type=email], textarea, select{
+      width:100%;padding:8px 10px;border-radius:8px;border:1px solid #e6e9ef;
+      font-size:14px;background:#fff;box-sizing:border-box;
+    }
+    textarea{min-height:70px;resize:vertical;}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;}
+    .btn.secondary{background:#e6edf9;color:var(--accent);font-weight:600;border:1px solid rgba(11,108,246,0.12);}
+    .btn.ghost{background:transparent;border:1px dashed #d1d5db;color:#374151;}
+    .small{font-size:13px;padding:6px 10px;border-radius:8px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .muted{color:var(--muted);font-size:13px}
+    .add-btn{background:#0ea5a4;color:#fff}
+    /* Resume preview styling (this is what's exported to PDF) */
+    #resume-preview{width:792px;min-height:1122px;padding:36px;background:#fff;border-radius:6px;box-shadow:0 10px 30px rgba(15,23,42,0.06);box-sizing:border-box;}
+    .r-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+    .r-name{font-size:26px;font-weight:700}
+    .r-role{color:var(--muted);margin-top:6px}
+    .r-contact{font-size:13px;color:var(--muted);text-align:right}
+    .section{margin-top:18px}
+    .section-title{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px}
+    .skills-list{display:flex;flex-wrap:wrap;gap:8px}
+    .skill-pill{background:#f3f4f6;padding:6px 8px;border-radius:6px;font-size:12px;color:#111}
+    .job{margin-bottom:12px}
+    .job .job-title{font-weight:600}
+    .job .job-meta{font-size:12px;color:var(--muted)}
+    .edu .edu-meta{font-size:12px;color:var(--muted)}
+    footer{margin-top:18px;font-size:12px;color:var(--muted);border-top:1px dashed #e6e9ef;padding-top:10px}
+    .actions-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    /* small helper */
+    .muted-block{background:#fbfdff;padding:10px;border-radius:8px;border:1px solid #eef6ff}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Resume Builder — Generate PDF</h1>
+    <div class="grid">
+      <div>
+        <div class="card">
+          <div class="actions-top">
+            <div>
+              <strong>Fill in details</strong>
+              <div class="muted">Quick, focused prompts — add multiple experience / education entries as needed.</div>
+            </div>
+            <div class="muted">Local (client-side) — PDF generated in your browser</div>
+          </div>
+
+          <form id="resume-form">
+            <label>Full name</label>
+            <input type="text" id="fullName" placeholder="Dennis N." required>
+
+            <div class="row">
+              <div style="flex:1">
+                <label>Job title / headline</label>
+                <input type="text" id="headline" placeholder="Maintenance Technician / Mechanic">
+              </div>
+              <div style="width:180px">
+                <label>Location (city, state)</label>
+                <input type="text" id="location" placeholder="Mountain Home, AR">
+              </div>
+            </div>
+
+            <div class="row">
+              <div style="flex:1">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="you@email.com">
+              </div>
+              <div style="width:160px">
+                <label>Phone</label>
+                <input type="text" id="phone" placeholder="(000) 000-0000">
+              </div>
+            </div>
+
+            <label>Professional Summary (1–3 short sentences)</label>
+            <textarea id="summary" placeholder="Concise summary of experience and strengths..."></textarea>
+
+            <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+              <strong>Skills</strong>
+              <button type="button" class="btn secondary small" id="add-skill-btn">Add sample skills</button>
+            </div>
+            <label class="muted">Enter skills separated by commas</label>
+            <input type="text" id="skills" placeholder="Troubleshooting, Welding, PLCs, Preventive Maintenance">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+              <strong>Work Experience</strong>
+              <div class="controls">
+                <button type="button" id="add-work" class="btn ghost small">+ Add job</button>
+                <button type="button" id="clear-work" class="btn ghost small">Clear jobs</button>
+              </div>
+            </div>
+            <div id="work-list"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+              <strong>Education</strong>
+              <div class="controls">
+                <button type="button" id="add-edu" class="btn ghost small">+ Add education</button>
+                <button type="button" id="clear-edu" class="btn ghost small">Clear education</button>
+              </div>
+            </div>
+            <div id="edu-list"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+              <strong>Certifications / Licenses</strong>
+              <div class="muted">Comma separated</div>
+            </div>
+            <input type="text" id="certs" placeholder="Forklift certified, HVAC EPA 608">
+
+            <div style="display:flex;gap:10px;margin-top:18px;align-items:center">
+              <button type="button" id="generate-pdf" class="btn">Generate PDF</button>
+              <button type="button" id="preview-update" class="btn secondary">Update preview</button>
+              <button type="button" id="reset-btn" class="btn ghost">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <div style="margin-top:12px" class="muted-block">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>Quick tips</strong></div>
+            <div class="muted">Keep it to 1 page if possible</div>
+          </div>
+          <ul style="margin:8px 0 0 16px">
+            <li>Use short bullet points describing impact (e.g., "Reduced downtime 20% via preventive program").</li>
+            <li>Include job-specific keywords (maintenance, troubleshooting, PLC, welding, HVAC).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <strong>Live preview (this is what will be in your PDF)</strong>
+          <div style="margin-top:10px;font-size:13px;color:var(--muted)">Click <em>Update preview</em> after editing or use <em>Generate PDF</em> to produce/download the file.</div>
+          <div id="resume-preview" aria-hidden="false">
+            <!-- preview content injected here -->
+          </div>
+        </div>
+        <div style="margin-top:12px" class="card muted">
+          <strong>How it works</strong>
+          <p style="margin:8px 0 0">Fill the form → Update preview → Generate PDF. Everything runs in your browser; no data is uploaded anywhere.</p>
+        </div>
+      </div>
+    </div>
+
+<div style="background:#f0f2f5;padding:6px;text-align:center;font-size:12px;color:#555;border-radius:6px;margin-top:20px;">
+  Built by Dennis Nuckols
+</div>
+
+  </div>
+
+  <!-- html2pdf bundle (includes jsPDF & html2canvas) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+  <script>
+    // Helper to create elements
+    function el(tag, props={}, ...children){
+      const node = document.createElement(tag);
+      Object.entries(props).forEach(([k,v])=>{
+        if(k === 'class') node.className = v;
+        else if(k === 'html') node.innerHTML = v;
+        else node.setAttribute(k,v);
+      });
+      children.forEach(c => { if(typeof c === 'string') node.appendChild(document.createTextNode(c)); else if(c) node.appendChild(c); });
+      return node;
+    }
+
+    const workList = document.getElementById('work-list');
+    const eduList = document.getElementById('edu-list');
+    const preview = document.getElementById('resume-preview');
+
+    // Add initial single work/education entry
+    function makeWorkEntry(data={}){
+      const wrapper = el('div',{class:'work-entry', style:'border:1px dashed #eef2ff;padding:10px;border-radius:8px;margin-top:10px'});
+      wrapper.appendChild(el('label',{}, 'Job title'));
+      wrapper.appendChild(el('input',{type:'text', class:'we-title', value:data.title||'', placeholder:'Maintenance Technician / Mechanic'}));
+      const row = el('div',{class:'row'});
+      const companyDiv = el('div',{style:'flex:1'});
+      companyDiv.appendChild(el('label',{}, 'Company'));
+      companyDiv.appendChild(el('input',{type:'text', class:'we-company', value:data.company||'', placeholder:'Company name'}));
+      const datesDiv = el('div',{style:'width:160px'});
+      datesDiv.appendChild(el('label',{}, 'Dates'));
+      datesDiv.appendChild(el('input',{type:'text', class:'we-dates', value:data.dates||'', placeholder:'2019 - Present'}));
+      row.appendChild(companyDiv);row.appendChild(datesDiv);
+      wrapper.appendChild(row);
+      wrapper.appendChild(el('label',{}, 'Location'));
+      wrapper.appendChild(el('input',{type:'text', class:'we-location', value:data.location||'', placeholder:'City, State'}));
+      wrapper.appendChild(el('label',{}, 'Short description / bullets (separate lines)'));
+      wrapper.appendChild(el('textarea',{class:'we-bullets', placeholder:'- Performed...'}, data.bullets||''));
+      const remove = el('button',{type:'button', class:'btn ghost small', style:'margin-top:8px'}, 'Remove');
+      remove.addEventListener('click',()=> wrapper.remove());
+      wrapper.appendChild(remove);
+      return wrapper;
+    }
+
+    function makeEduEntry(data={}){
+      const wrapper = el('div',{class:'edu-entry', style:'border:1px dashed #eef2ff;padding:10px;border-radius:8px;margin-top:10px'});
+      wrapper.appendChild(el('label',{}, 'Degree / Program'));
+      wrapper.appendChild(el('input',{type:'text', class:'edu-degree', value:data.degree||'', placeholder:'Associate in Applied Science'}));
+      const row = el('div',{class:'row'});
+      const schoolDiv = el('div',{style:'flex:1'});
+      schoolDiv.appendChild(el('label',{}, 'School'));
+      schoolDiv.appendChild(el('input',{type:'text', class:'edu-school', value:data.school||'', placeholder:'ASU Mountain Home'}));
+      const datesDiv = el('div',{style:'width:160px'});
+      datesDiv.appendChild(el('label',{}, 'Dates'));
+      datesDiv.appendChild(el('input',{type:'text', class:'edu-dates', value:data.dates||'', placeholder:'2010 - 2012'}));
+      row.appendChild(schoolDiv);row.appendChild(datesDiv);
+      wrapper.appendChild(row);
+      const remove = el('button',{type:'button', class:'btn ghost small', style:'margin-top:8px'}, 'Remove');
+      remove.addEventListener('click',()=> wrapper.remove());
+      wrapper.appendChild(remove);
+      return wrapper;
+    }
+
+    document.getElementById('add-work').addEventListener('click', ()=> workList.appendChild(makeWorkEntry()));
+    document.getElementById('add-edu').addEventListener('click', ()=> eduList.appendChild(makeEduEntry()));
+    document.getElementById('clear-work').addEventListener('click', ()=> workList.innerHTML='');
+    document.getElementById('clear-edu').addEventListener('click', ()=> eduList.innerHTML='');
+    document.getElementById('add-skill-btn').addEventListener('click', ()=>{
+      const sample = ['Troubleshooting','Preventive Maintenance','Welding','PLC','Hydraulics','Forklift','Fabrication','Diagnostics'].join(', ');
+      document.getElementById('skills').value = sample;
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', ()=>{
+      if(!confirm('Reset all fields?')) return;
+      document.getElementById('resume-form').reset();
+      workList.innerHTML=''; eduList.innerHTML=''; renderPreview();
+    });
+
+    function gatherForm(){
+      const data = {};
+      data.fullName = document.getElementById('fullName').value.trim() || 'Your Name';
+      data.headline = document.getElementById('headline').value.trim();
+      data.location = document.getElementById('location').value.trim();
+      data.email = document.getElementById('email').value.trim();
+      data.phone = document.getElementById('phone').value.trim();
+      data.summary = document.getElementById('summary').value.trim();
+      data.skills = document.getElementById('skills').value.split(',').map(s=>s.trim()).filter(Boolean);
+      data.certs = document.getElementById('certs').value.split(',').map(s=>s.trim()).filter(Boolean);
+      data.work = Array.from(document.querySelectorAll('.work-entry')).map(w=>{
+        return {
+          title: w.querySelector('.we-title').value.trim(),
+          company: w.querySelector('.we-company').value.trim(),
+          dates: w.querySelector('.we-dates').value.trim(),
+          location: w.querySelector('.we-location').value.trim(),
+          bullets: w.querySelector('.we-bullets').value.trim().split(/\n+/).map(b=>b.trim()).filter(Boolean)
+        };
+      });
+      data.edu = Array.from(document.querySelectorAll('.edu-entry')).map(e=>{
+        return {
+          degree: e.querySelector('.edu-degree').value.trim(),
+          school: e.querySelector('.edu-school').value.trim(),
+          dates: e.querySelector('.edu-dates').value.trim()
+        };
+      });
+      return data;
+    }
+
+    function renderPreview(){
+      const d = gatherForm();
+      preview.innerHTML = '';
+      // Header
+      const header = el('div',{class:'r-header'});
+      const left = el('div',{},
+        el('div',{class:'r-name'}, d.fullName),
+        el('div',{class:'r-role'}, d.headline || '')
+      );
+      const right = el('div',{class:'r-contact'},
+        el('div',{}, d.location || ''),
+        el('div',{}, d.email || ''),
+        el('div',{}, d.phone || '')
+      );
+      header.appendChild(left); header.appendChild(right);
+      preview.appendChild(header);
+
+      // Summary
+      if(d.summary){
+        const sec = el('div',{class:'section'});
+        sec.appendChild(el('div',{class:'section-title'}, 'Professional Summary'));
+        sec.appendChild(el('div',{}, el('div',{style:'white-space:pre-wrap'}, d.summary)));
+        preview.appendChild(sec);
+      }
+
+      // Skills & Certs row
+      if(d.skills.length || d.certs.length){
+        const sec = el('div',{class:'section', style:'display:flex;gap:20px'});
+        const leftCol = el('div',{style:'flex:1'});
+        leftCol.appendChild(el('div',{class:'section-title'}, 'Skills'));
+        const skillsWrap = el('div',{class:'skills-list'});
+        d.skills.slice(0,12).forEach(s => skillsWrap.appendChild(el('div',{class:'skill-pill'}, s)));
+        leftCol.appendChild(skillsWrap);
+        sec.appendChild(leftCol);
+
+        if(d.certs.length){
+          const rightCol = el('div',{style:'width:220px'});
+          rightCol.appendChild(el('div',{class:'section-title'}, 'Certifications'));
+          rightCol.appendChild(el('div',{}, d.certs.join(', ')));
+          sec.appendChild(rightCol);
+        }
+        preview.appendChild(sec);
+      }
+
+      // Experience
+      if(d.work.length){
+        const sec = el('div',{class:'section'});
+        sec.appendChild(el('div',{class:'section-title'}, 'Work Experience'));
+        d.work.forEach(it=>{
+          const job = el('div',{class:'job'});
+          job.appendChild(el('div',{class:'job-title'}, it.title || ''));
+          job.appendChild(el('div',{class:'job-meta'}, `${it.company || ''} • ${it.location || ''} • ${it.dates || ''}`));
+          if(it.bullets && it.bullets.length){
+            const ul = el('ul',{style:'margin:6px 0 8px 18px'});
+            it.bullets.forEach(b => ul.appendChild(el('li',{}, b)));
+            job.appendChild(ul);
+          }
+          sec.appendChild(job);
+        });
+        preview.appendChild(sec);
+      }
+
+      // Education
+      if(d.edu.length){
+        const sec = el('div',{class:'section'});
+        sec.appendChild(el('div',{class:'section-title'}, 'Education'));
+        d.edu.forEach(it=>{
+          const e = el('div',{class:'edu'});
+          e.appendChild(el('div',{class:'job-title'}, it.degree || ''));
+          e.appendChild(el('div',{class:'edu-meta'}, `${it.school || ''} • ${it.dates || ''}`));
+          sec.appendChild(e);
+        });
+        preview.appendChild(sec);
+      }
+
+      // Footer or additional row
+      preview.appendChild(el('footer',{}, `Generated ${new Date().toLocaleDateString()}. Resume generated locally in your browser.`));
+    }
+
+    // initial setup: add one work and one edu
+    workList.appendChild(makeWorkEntry({title:'Maintenance Technician',company:'ACME Co.',dates:'2019 - Present',location:'Mountain Home, AR',bullets:'Performed preventive maintenance\nDiagnosed mechanical failures'}));
+    eduList.appendChild(makeEduEntry({degree:'High School Diploma',school:'Local High School',dates:'2000'}));
+    renderPreview();
+
+    document.getElementById('preview-update').addEventListener('click', renderPreview);
+
+    document.getElementById('generate-pdf').addEventListener('click', async ()=>{
+      renderPreview();
+      // small delay to ensure styles applied
+      await new Promise(r=>setTimeout(r,150));
+      const opt = {
+        margin:       10,
+        filename:     'resume.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging:false },
+        jsPDF:        { unit: 'pt', format: 'letter', orientation: 'portrait' }
+      };
+      // html2pdf will render the element to a pdf
+      html2pdf().set(opt).from(preview).save();
+    });
+
+    // Allow pressing Enter to add a job if focused in job title (nice shortcut)
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && e.target && (e.target.classList.contains('we-title') || e.target.id === 'skills')) {
+        // do nothing (prevent accidental submits)
+        e.preventDefault();
+      }
+    });
+
+    // Render preview as user types (light)
+    const inputs = document.querySelectorAll('#resume-form input, #resume-form textarea');
+    inputs.forEach(i => i.addEventListener('input', ()=>{
+      // small debounce
+      if(window._previewTimer) clearTimeout(window._previewTimer);
+      window._previewTimer = setTimeout(renderPreview, 350);
+    }));
+  </script>
+</body>
+</html>
