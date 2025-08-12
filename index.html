@@ -70,6 +70,15 @@
 
           <form id="resume-form">
             <label>Full name</label>
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+  <label for="resume-select" style="font-weight:600;">Saved Resumes:</label>
+  <select id="resume-select" style="flex:1; padding:6px 8px; border-radius:6px; border:1px solid #ccc;">
+    <option value="" disabled selected>Select a resume</option>
+  </select>
+  <button type="button" id="load-resume" class="btn small secondary">Load</button>
+  <button type="button" id="delete-resume" class="btn small ghost">Delete</button>
+  <button type="button" id="save-resume" class="btn small add-btn">Save As</button>
+</div>
             <input type="text" id="fullName" placeholder="Dennis N." required>
 
             <div class="row">
@@ -189,29 +198,121 @@
     const eduList = document.getElementById('edu-list');
     const preview = document.getElementById('resume-preview');
 
-// Save form data to local storage
-function saveResume() {
-    const formData = {};
-    document.querySelectorAll('#resume-form input, #resume-form textarea').forEach(input => {
-        formData[input.name] = input.value;
-    });
-    localStorage.setItem('savedResume', JSON.stringify(formData));
-    alert('Resume saved locally!');
+// Key for localStorage storing all resumes metadata (names)
+const RESUME_STORAGE_KEY = 'savedResumesList';
+
+// Load saved resume names from localStorage
+function loadSavedResumeNames() {
+  const saved = localStorage.getItem(RESUME_STORAGE_KEY);
+  return saved ? JSON.parse(saved) : [];
 }
 
-// Load form data from local storage
-function loadResume() {
-    const saved = localStorage.getItem('savedResume');
-    if (saved) {
-        const formData = JSON.parse(saved);
-        Object.keys(formData).forEach(name => {
-            const input = document.querySelector(`[name="${name}"]`);
-            if (input) input.value = formData[name];
-        });
-        alert('Resume loaded!');
-    } else {
-        alert('No saved resume found.');
-    }
+// Save the resume names list to localStorage
+function saveResumeNames(names) {
+  localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(names));
+}
+
+// Populate the resume dropdown with saved names
+function populateResumeDropdown() {
+  const select = document.getElementById('resume-select');
+  const names = loadSavedResumeNames();
+  // Clear all except placeholder
+  select.innerHTML = '<option value="" disabled selected>Select a resume</option>';
+  names.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+}
+
+// Save current form data under a name given by prompt
+function saveCurrentResume() {
+  let name = prompt('Enter a name for this resume:');
+  if (!name) return alert('Save cancelled: No name provided.');
+
+  // Sanitize name (optional)
+  name = name.trim();
+
+  // Gather form data
+  const data = gatherForm();
+
+  // Save to localStorage using a unique key per resume
+  localStorage.setItem('resume_' + name, JSON.stringify(data));
+
+  // Update names list
+  const names = loadSavedResumeNames();
+  if (!names.includes(name)) {
+    names.push(name);
+    saveResumeNames(names);
+  }
+
+  populateResumeDropdown();
+  alert(`Resume "${name}" saved locally.`);
+}
+
+// Load selected resume into form
+function loadSelectedResume() {
+  const select = document.getElementById('resume-select');
+  const name = select.value;
+  if (!name) return alert('Please select a resume to load.');
+
+  const dataRaw = localStorage.getItem('resume_' + name);
+  if (!dataRaw) return alert('Selected resume data not found.');
+
+  const data = JSON.parse(dataRaw);
+
+  // Fill form fields
+  document.getElementById('fullName').value = data.fullName || '';
+  document.getElementById('headline').value = data.headline || '';
+  document.getElementById('location').value = data.location || '';
+  document.getElementById('email').value = data.email || '';
+  document.getElementById('phone').value = data.phone || '';
+  document.getElementById('summary').value = data.summary || '';
+  document.getElementById('skills').value = (data.skills || []).join(', ');
+  document.getElementById('certs').value = (data.certs || []).join(', ');
+
+  // Clear current work and education
+  workList.innerHTML = '';
+  eduList.innerHTML = '';
+
+  // Populate work entries
+  (data.work || []).forEach(w => workList.appendChild(makeWorkEntry({
+    title: w.title,
+    company: w.company,
+    dates: w.dates,
+    location: w.location,
+    bullets: (w.bullets || []).join('\n')
+  })));
+
+  // Populate education entries
+  (data.edu || []).forEach(e => eduList.appendChild(makeEduEntry({
+    degree: e.degree,
+    school: e.school,
+    dates: e.dates
+  })));
+
+  renderPreview();
+  alert(`Resume "${name}" loaded.`);
+}
+
+// Delete selected resume
+function deleteSelectedResume() {
+  const select = document.getElementById('resume-select');
+  const name = select.value;
+  if (!name) return alert('Please select a resume to delete.');
+
+  if (!confirm(`Delete resume "${name}"? This action cannot be undone.`)) return;
+
+  // Remove resume data and name
+  localStorage.removeItem('resume_' + name);
+
+  let names = loadSavedResumeNames();
+  names = names.filter(n => n !== name);
+  saveResumeNames(names);
+
+  populateResumeDropdown();
+  alert(`Resume "${name}" deleted.`);
 }
 
     // Add initial single work/education entry
@@ -256,7 +357,13 @@ function loadResume() {
       wrapper.appendChild(remove);
       return wrapper;
     }
+    
+    document.getElementById('save-resume').addEventListener('click', saveCurrentResume);
+document.getElementById('load-resume').addEventListener('click', loadSelectedResume);
+document.getElementById('delete-resume').addEventListener('click', deleteSelectedResume);
 
+// Populate dropdown on page load
+populateResumeDropdown();
     document.getElementById('add-work').addEventListener('click', ()=> workList.appendChild(makeWorkEntry()));
     document.getElementById('add-edu').addEventListener('click', ()=> eduList.appendChild(makeEduEntry()));
     document.getElementById('clear-work').addEventListener('click', ()=> workList.innerHTML='');
