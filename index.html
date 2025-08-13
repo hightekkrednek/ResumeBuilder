@@ -206,180 +206,180 @@
     const eduList = document.getElementById('edu-list');
     const preview = document.getElementById('resume-preview');
 
-// Key for localStorage storing all resumes metadata (names)
-const RESUME_STORAGE_KEY = 'savedResumesList';
-
-// Load saved resume names from localStorage
-function loadSavedResumeNames() {
-  const saved = localStorage.getItem(RESUME_STORAGE_KEY);
-  return saved ? JSON.parse(saved) : [];
-}
-
-// Save the resume names list to localStorage
-function saveResumeNames(names) {
-  localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(names));
-}
-
-// Populate the resume dropdown with saved names
-function populateResumeDropdown() {
-  const select = document.getElementById('resume-select');
-  const names = loadSavedResumeNames();
-  // Clear all except placeholder
-  select.innerHTML = '<option value="" disabled selected>Select a resume</option>';
-  names.forEach(name => {
-    const option = document.createElement('option');
-    option.value = name;
-    option.textContent = name;
-    select.appendChild(option);
-  });
-}
-
-// Save current form data under a name given by prompt
-function saveCurrentResume() {
-  let name = prompt('Enter a name for this resume:');
-  if (!name) return alert('Save cancelled: No name provided.');
-
-  // Sanitize name (optional)
-  name = name.trim();
-
-  // Gather form data
-  const data = gatherForm();
-
-  // Save to localStorage using a unique key per resume
-  localStorage.setItem('resume_' + name, JSON.stringify(data));
-
-  // Update names list
-  const names = loadSavedResumeNames();
-  if (!names.includes(name)) {
-    names.push(name);
-    saveResumeNames(names);
-  }
-
-  populateResumeDropdown();
-  alert(`Resume "${name}" saved locally.`);
-}
-
-// Load selected resume into form
-function loadSelectedResume() {
-  const select = document.getElementById('resume-select');
-  const name = select.value;
-  if (!name) return alert('Please select a resume to load.');
-
-  const dataRaw = localStorage.getItem('resume_' + name);
-  if (!dataRaw) return alert('Selected resume data not found.');
-
-  const data = JSON.parse(dataRaw);
-
-  // Fill form fields
-  document.getElementById('fullName').value = data.fullName || '';
-  document.getElementById('headline').value = data.headline || '';
-  document.getElementById('location').value = data.location || '';
-  document.getElementById('email').value = data.email || '';
-  document.getElementById('phone').value = data.phone || '';
-  document.getElementById('summary').value = data.summary || '';
-  document.getElementById('skills').value = (data.skills || []).join(', ');
-  document.getElementById('certs').value = (data.certs || []).join(', ');
-
-  // Clear current work and education
-  workList.innerHTML = '';
-  eduList.innerHTML = '';
-
-  // Populate work entries
-  (data.work || []).forEach(w => workList.appendChild(makeWorkEntry({
-    title: w.title,
-    company: w.company,
-    dates: w.dates,
-    location: w.location,
-    bullets: (w.bullets || []).join('\n')
-  })));
-
-  // Populate education entries
-  (data.edu || []).forEach(e => eduList.appendChild(makeEduEntry({
-    degree: e.degree,
-    school: e.school,
-    dates: e.dates
-  })));
-
-  renderPreview();
-  alert(`Resume "${name}" loaded.`);
-}
-
-// Delete selected resume
-function deleteSelectedResume() {
-  const select = document.getElementById('resume-select');
-  const name = select.value;
-  if (!name) return alert('Please select a resume to delete.');
-
-  if (!confirm(`Delete resume "${name}"? This action cannot be undone.`)) return;
-
-  // Remove resume data and name
-  localStorage.removeItem('resume_' + name);
-
-  let names = loadSavedResumeNames();
-  names = names.filter(n => n !== name);
-  saveResumeNames(names);
-
-  populateResumeDropdown();
-  alert(`Resume "${name}" deleted.`);
-}
-
-    // Add initial single work/education entry
-    function makeWorkEntry(data={}){
-      const wrapper = el('div',{class:'work-entry', style:'border:1px dashed #eef2ff;padding:10px;border-radius:8px;margin-top:10px'});
-      wrapper.appendChild(el('label',{}, 'Job title'));
-      wrapper.appendChild(el('input',{type:'text', class:'we-title', value:data.title||'', placeholder:'Maintenance Technician / Mechanic'}));
-      const row = el('div',{class:'row'});
-      const companyDiv = el('div',{style:'flex:1'});
-      companyDiv.appendChild(el('label',{}, 'Company'));
-      companyDiv.appendChild(el('input',{type:'text', class:'we-company', value:data.company||'', placeholder:'Company name'}));
-      const datesDiv = el('div',{style:'width:160px'});
-      datesDiv.appendChild(el('label',{}, 'Dates'));
-      datesDiv.appendChild(el('input',{type:'text', class:'we-dates', value:data.dates||'', placeholder:'2019 - Present'}));
-      row.appendChild(companyDiv);row.appendChild(datesDiv);
-      wrapper.appendChild(row);
-      wrapper.appendChild(el('label',{}, 'Location'));
-      wrapper.appendChild(el('input',{type:'text', class:'we-location', value:data.location||'', placeholder:'City, State'}));
-      wrapper.appendChild(el('label',{}, 'Short description / bullets (separate lines)'));
-      wrapper.appendChild(el('textarea',{class:'we-bullets', placeholder:'- Performed...'}, data.bullets||''));
-      const remove = el('button',{type:'button', class:'btn ghost small', style:'margin-top:8px'}, 'Remove');
-      remove.addEventListener('click',()=> wrapper.remove());
-      wrapper.appendChild(remove);
-      return wrapper;
-    }
-
-    function makeEduEntry(data={}){
-      const wrapper = el('div',{class:'edu-entry', style:'border:1px dashed #eef2ff;padding:10px;border-radius:8px;margin-top:10px'});
-      wrapper.appendChild(el('label',{}, 'Degree / Program'));
-      wrapper.appendChild(el('input',{type:'text', class:'edu-degree', value:data.degree||'', placeholder:'Associate in Applied Science'}));
-      const row = el('div',{class:'row'});
-      const schoolDiv = el('div',{style:'flex:1'});
-      schoolDiv.appendChild(el('label',{}, 'School'));
-      schoolDiv.appendChild(el('input',{type:'text', class:'edu-school', value:data.school||'', placeholder:'ASU Mountain Home'}));
-      const datesDiv = el('div',{style:'width:160px'});
-      datesDiv.appendChild(el('label',{}, 'Dates'));
-      datesDiv.appendChild(el('input',{type:'text', class:'edu-dates', value:data.dates||'', placeholder:'2010 - 2012'}));
-      row.appendChild(schoolDiv);row.appendChild(datesDiv);
-      wrapper.appendChild(row);
-      const remove = el('button',{type:'button', class:'btn ghost small', style:'margin-top:8px'}, 'Remove');
-      remove.addEventListener('click',()=> wrapper.remove());
-      wrapper.appendChild(remove);
-      return wrapper;
-    }
-    
-    document.getElementById('save-resume').addEventListener('click', saveCurrentResume);
-document.getElementById('load-resume').addEventListener('click', loadSelectedResume);
-document.getElementById('delete-resume').addEventListener('click', deleteSelectedResume);
-
-// Populate dropdown on page load
-populateResumeDropdown();
-    document.getElementById('add-work').addEventListener('click', ()=> workList.appendChild(makeWorkEntry()));
-    document.getElementById('add-edu').addEventListener('click', ()=> eduList.appendChild(makeEduEntry()));
-    document.getElementById('clear-work').addEventListener('click', ()=> workList.innerHTML='');
-    document.getElementById('clear-edu').addEventListener('click', ()=> eduList.innerHTML='');
-    document.getElementById('add-skill-btn').addEventListener('click', ()=>{
-      const sample = ['Troubleshooting','Preventive Maintenance','Welding','PLC','Hydraulics','Forklift','Fabrication','Diagnostics'].join(', ');
-      document.getElementById('skills').value = sample;
-    });
+      // Key for localStorage storing all resumes metadata (names)
+      const RESUME_STORAGE_KEY = 'savedResumesList';
+      
+      // Load saved resume names from localStorage
+      function loadSavedResumeNames() {
+        const saved = localStorage.getItem(RESUME_STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+      }
+      
+      // Save the resume names list to localStorage
+      function saveResumeNames(names) {
+        localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(names));
+      }
+      
+      // Populate the resume dropdown with saved names
+      function populateResumeDropdown() {
+        const select = document.getElementById('resume-select');
+        const names = loadSavedResumeNames();
+        // Clear all except placeholder
+        select.innerHTML = '<option value="" disabled selected>Select a resume</option>';
+        names.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          select.appendChild(option);
+        });
+      }
+      
+      // Save current form data under a name given by prompt
+      function saveCurrentResume() {
+        let name = prompt('Enter a name for this resume:');
+        if (!name) return alert('Save cancelled: No name provided.');
+      
+        // Sanitize name (optional)
+        name = name.trim();
+      
+        // Gather form data
+        const data = gatherForm();
+      
+        // Save to localStorage using a unique key per resume
+        localStorage.setItem('resume_' + name, JSON.stringify(data));
+      
+        // Update names list
+        const names = loadSavedResumeNames();
+        if (!names.includes(name)) {
+          names.push(name);
+          saveResumeNames(names);
+        }
+      
+        populateResumeDropdown();
+        alert(`Resume "${name}" saved locally.`);
+      }
+      
+      // Load selected resume into form
+      function loadSelectedResume() {
+        const select = document.getElementById('resume-select');
+        const name = select.value;
+        if (!name) return alert('Please select a resume to load.');
+      
+        const dataRaw = localStorage.getItem('resume_' + name);
+        if (!dataRaw) return alert('Selected resume data not found.');
+      
+        const data = JSON.parse(dataRaw);
+      
+        // Fill form fields
+        document.getElementById('fullName').value = data.fullName || '';
+        document.getElementById('headline').value = data.headline || '';
+        document.getElementById('location').value = data.location || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('phone').value = data.phone || '';
+        document.getElementById('summary').value = data.summary || '';
+        document.getElementById('skills').value = (data.skills || []).join(', ');
+        document.getElementById('certs').value = (data.certs || []).join(', ');
+      
+        // Clear current work and education
+        workList.innerHTML = '';
+        eduList.innerHTML = '';
+      
+        // Populate work entries
+        (data.work || []).forEach(w => workList.appendChild(makeWorkEntry({
+          title: w.title,
+          company: w.company,
+          dates: w.dates,
+          location: w.location,
+          bullets: (w.bullets || []).join('\n')
+        })));
+      
+        // Populate education entries
+        (data.edu || []).forEach(e => eduList.appendChild(makeEduEntry({
+          degree: e.degree,
+          school: e.school,
+          dates: e.dates
+        })));
+      
+        renderPreview();
+        alert(`Resume "${name}" loaded.`);
+      }
+      
+      // Delete selected resume
+      function deleteSelectedResume() {
+        const select = document.getElementById('resume-select');
+        const name = select.value;
+        if (!name) return alert('Please select a resume to delete.');
+      
+        if (!confirm(`Delete resume "${name}"? This action cannot be undone.`)) return;
+      
+        // Remove resume data and name
+        localStorage.removeItem('resume_' + name);
+      
+        let names = loadSavedResumeNames();
+        names = names.filter(n => n !== name);
+        saveResumeNames(names);
+      
+        populateResumeDropdown();
+        alert(`Resume "${name}" deleted.`);
+      }
+      
+          // Add initial single work/education entry
+          function makeWorkEntry(data={}){
+            const wrapper = el('div',{class:'work-entry', style:'border:1px dashed #eef2ff;padding:10px;border-radius:8px;margin-top:10px'});
+            wrapper.appendChild(el('label',{}, 'Job title'));
+            wrapper.appendChild(el('input',{type:'text', class:'we-title', value:data.title||'', placeholder:'Maintenance Technician / Mechanic'}));
+            const row = el('div',{class:'row'});
+            const companyDiv = el('div',{style:'flex:1'});
+            companyDiv.appendChild(el('label',{}, 'Company'));
+            companyDiv.appendChild(el('input',{type:'text', class:'we-company', value:data.company||'', placeholder:'Company name'}));
+            const datesDiv = el('div',{style:'width:160px'});
+            datesDiv.appendChild(el('label',{}, 'Dates'));
+            datesDiv.appendChild(el('input',{type:'text', class:'we-dates', value:data.dates||'', placeholder:'2019 - Present'}));
+            row.appendChild(companyDiv);row.appendChild(datesDiv);
+            wrapper.appendChild(row);
+            wrapper.appendChild(el('label',{}, 'Location'));
+            wrapper.appendChild(el('input',{type:'text', class:'we-location', value:data.location||'', placeholder:'City, State'}));
+            wrapper.appendChild(el('label',{}, 'Short description / bullets (separate lines)'));
+            wrapper.appendChild(el('textarea',{class:'we-bullets', placeholder:'- Performed...'}, data.bullets||''));
+            const remove = el('button',{type:'button', class:'btn ghost small', style:'margin-top:8px'}, 'Remove');
+            remove.addEventListener('click',()=> wrapper.remove());
+            wrapper.appendChild(remove);
+            return wrapper;
+          }
+      
+          function makeEduEntry(data={}){
+            const wrapper = el('div',{class:'edu-entry', style:'border:1px dashed #eef2ff;padding:10px;border-radius:8px;margin-top:10px'});
+            wrapper.appendChild(el('label',{}, 'Degree / Program'));
+            wrapper.appendChild(el('input',{type:'text', class:'edu-degree', value:data.degree||'', placeholder:'Associate in Applied Science'}));
+            const row = el('div',{class:'row'});
+            const schoolDiv = el('div',{style:'flex:1'});
+            schoolDiv.appendChild(el('label',{}, 'School'));
+            schoolDiv.appendChild(el('input',{type:'text', class:'edu-school', value:data.school||'', placeholder:'ASU Mountain Home'}));
+            const datesDiv = el('div',{style:'width:160px'});
+            datesDiv.appendChild(el('label',{}, 'Dates'));
+            datesDiv.appendChild(el('input',{type:'text', class:'edu-dates', value:data.dates||'', placeholder:'2010 - 2012'}));
+            row.appendChild(schoolDiv);row.appendChild(datesDiv);
+            wrapper.appendChild(row);
+            const remove = el('button',{type:'button', class:'btn ghost small', style:'margin-top:8px'}, 'Remove');
+            remove.addEventListener('click',()=> wrapper.remove());
+            wrapper.appendChild(remove);
+            return wrapper;
+          }
+          
+          document.getElementById('save-resume').addEventListener('click', saveCurrentResume);
+      document.getElementById('load-resume').addEventListener('click', loadSelectedResume);
+      document.getElementById('delete-resume').addEventListener('click', deleteSelectedResume);
+      
+      // Populate dropdown on page load
+      populateResumeDropdown();
+          document.getElementById('add-work').addEventListener('click', ()=> workList.appendChild(makeWorkEntry()));
+          document.getElementById('add-edu').addEventListener('click', ()=> eduList.appendChild(makeEduEntry()));
+          document.getElementById('clear-work').addEventListener('click', ()=> workList.innerHTML='');
+          document.getElementById('clear-edu').addEventListener('click', ()=> eduList.innerHTML='');
+          document.getElementById('add-skill-btn').addEventListener('click', ()=>{
+            const sample = ['Troubleshooting','Preventive Maintenance','Welding','PLC','Hydraulics','Forklift','Fabrication','Diagnostics'].join(', ');
+            document.getElementById('skills').value = sample;
+          });
 
     document.getElementById('reset-btn').addEventListener('click', ()=>{
       if(!confirm('Reset all fields?')) return;
@@ -539,25 +539,25 @@ populateResumeDropdown();
 
 
 
-<style>
-#emailButton {
-    display: inline-block;
-    background-color: #28a745; /* same green as your Generate PDF */
-    color: white;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 5px;
-    text-decoration: none;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-#emailButton:hover {
-    background-color: #218838; /* darker green hover */
-}
-</style>
+        <style>
+        #emailButton {
+            display: inline-block;
+            background-color: #28a745; /* same green as your Generate PDF */
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        #emailButton:hover {
+            background-color: #218838; /* darker green hover */
+        }
+        </style>
 
 </body>
 </html>
